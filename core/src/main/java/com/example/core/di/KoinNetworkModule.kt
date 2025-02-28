@@ -18,7 +18,7 @@ fun networkModule() =
         single(named(networkResponseAdapterFactory)) { NetworkResponseAdapterFactory() }
         single {
             provideInternalRetrofit(
-                baseUrl = "https://the-lazy-media-api.vercel.app/",
+                baseUrl = "https://itunes.apple.com/",
                 ctx = androidContext(),
                 get(named(networkResponseAdapterFactory))
             )

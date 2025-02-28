@@ -23,3 +23,4 @@ rootProject.name = "Music Player"
 include(":app")
 include(":core")
 include(":features")
+include(":uicomponent")
