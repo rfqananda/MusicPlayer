@@ -6,9 +6,9 @@ import com.example.core.networking.dispatcher.CoroutinesDispatcherProvider
 import com.example.core.state.UiSafeState
 import com.example.core.utils.Constants.ApiError.UNKNOWN_ERROR
 import com.example.core.utils.DomainResult
-import com.example.features.mainscreen.ui.model.SearchMusicModelUi
 import com.example.features.mainscreen.domain.repository.SearchMusicRepository
 import com.example.features.mainscreen.ui.mapper.toUi
+import com.example.features.mainscreen.ui.model.SearchMusicModelUi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,10 +24,6 @@ class SearchMusicViewModel(
         MutableStateFlow<UiSafeState<SearchMusicModelUi>>(UiSafeState.Uninitialized)
     val searchMusic: StateFlow<UiSafeState<SearchMusicModelUi>> = _searchMusic.asStateFlow()
 
-    init {
-        searchMusic("tompi")
-    }
-
     fun searchMusic(term: String) = viewModelScope.launch(dispatcher.io) {
         _searchMusic.update { UiSafeState.Loading }
         when (val response = repository.getSearchMusic(term)) {
@@ -42,12 +38,26 @@ class SearchMusicViewModel(
 
             is DomainResult.EmptyState -> {
                 _searchMusic.update { UiSafeState.Empty }
-
             }
 
             else -> {
                 _searchMusic.update { UiSafeState.Error(UNKNOWN_ERROR) }
+            }
+        }
+    }
 
+    fun onItemSelected(selectedPosition: Int) = viewModelScope.launch(dispatcher.computation) {
+        val currentState = _searchMusic.value
+        if (currentState is UiSafeState.Success) {
+            val currentData = currentState.data
+            val updatedResults = currentData.results.mapIndexed { index, track ->
+                track.copy(isSelected = index == selectedPosition)
+            }
+
+            _searchMusic.update {
+                UiSafeState.Success(
+                    currentData.copy(results = updatedResults)
+                )
             }
         }
     }

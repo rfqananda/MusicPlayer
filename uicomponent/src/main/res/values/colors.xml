@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bluePrimary">#2468b9</color>
+    <color name="blueSecondary">#332468B9</color>
+    <color name="greySelected">#33677890</color>
+</resources>

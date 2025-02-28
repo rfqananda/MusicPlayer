@@ -6,6 +6,7 @@ data class SearchMusicModelUi(
 )
 
 data class TrackUi(
+    val isSelected: Boolean = false,
     val songImage: String = "",
     val songName: String = "",
     val artist: String = "",

@@ -37,7 +37,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(project(":uicomponent"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -61,6 +60,11 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.compose.live.data)
     implementation(libs.coil.compose)
+    implementation(libs.lottie.compose)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.session)
 
     implementation(project(":core"))
+    implementation(project(":uicomponent"))
 }
