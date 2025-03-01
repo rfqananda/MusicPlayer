@@ -21,6 +21,7 @@ liveData = "1.0.0"
 navigationCompose = "2.8.7"
 chuck = "4.1.0"
 chuckNoOp = "4.1.0"
+navigationComposeVersion = "2.8.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +57,7 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 chuck = { module = "com.github.chuckerteam.chucker:library", version.ref = "chuck" }
 chuck-no-op = { module = "com.github.chuckerteam.chucker:library-no-op", version.ref = "chuckNoOp" }
+navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationComposeVersion" }
 
 
 [plugins]

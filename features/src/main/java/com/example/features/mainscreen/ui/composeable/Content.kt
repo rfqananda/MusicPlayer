@@ -2,6 +2,7 @@ package com.example.features.mainscreen.ui.composeable
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -238,6 +240,9 @@ private fun MusicItem(
     val backgroundColor by animateColorAsState(
         targetValue = if (item.isSelected) color else Color.Transparent
     )
+
+    val isMarqueeEnabled = item.isSelected && playbackState == PlaybackState.PLAYING
+
     Column(modifier = Modifier
         .background(color = backgroundColor)
         .clickable { onClick() }
@@ -277,35 +282,54 @@ private fun MusicItem(
                     ) {
                         Text(
                             text = item.songName,
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.headlineMedium,
                             color = Color.Black,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(if (isMarqueeEnabled) Modifier.basicMarquee() else Modifier),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 16.sp
+                            overflow = if (isMarqueeEnabled) {
+                                TextOverflow.Clip
+                            } else {
+                                TextOverflow.Ellipsis
+                            },
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
                         )
 
                         Text(
                             text = item.artist,
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.headlineMedium,
                             color = Color.Black,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(if (isMarqueeEnabled) Modifier.basicMarquee() else Modifier),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            overflow = if (isMarqueeEnabled) {
+                                TextOverflow.Clip
+                            } else {
+                                TextOverflow.Ellipsis
+                            },
                             fontSize = 16.sp
                         )
 
                         Text(
                             text = item.album,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Color.Black,
-                            modifier = Modifier.fillMaxWidth(),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(if (isMarqueeEnabled) Modifier.basicMarquee() else Modifier),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            overflow = if (isMarqueeEnabled) {
+                                TextOverflow.Clip
+                            } else {
+                                TextOverflow.Ellipsis
+                            },
                             fontSize = 16.sp
                         )
                     }
-                    if (item.isSelected && playbackState == PlaybackState.PLAYING) {
+                    if (isMarqueeEnabled) {
                         InfiniteLoopLottieAnimation()
                     }
                 }
