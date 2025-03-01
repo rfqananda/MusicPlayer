@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 class SearchMusicViewModel(
     private val repository: SearchMusicRepository,
-    private val dispatcher: CoroutinesDispatcherProvider
+    private val dispatcher: CoroutinesDispatcherProvider,
 ) : ViewModel() {
 
     private val _searchMusic =
@@ -60,5 +60,35 @@ class SearchMusicViewModel(
                 )
             }
         }
+    }
+
+    fun nextTrack() = viewModelScope.launch(dispatcher.computation) {
+        val currentState = _searchMusic.value
+        if (currentState !is UiSafeState.Success) return@launch
+        val currentData = currentState.data
+        val tracks = currentData.results
+        if (tracks.isEmpty()) return@launch
+
+        val currentIndex = tracks.indexOfFirst { it.isSelected }
+        val newIndex = when {
+            currentIndex == -1 -> 0
+            else -> (currentIndex + 1) % tracks.size
+        }
+        onItemSelected(newIndex)
+    }
+
+    fun previousTrack() = viewModelScope.launch(dispatcher.computation) {
+        val currentState = _searchMusic.value
+        if (currentState !is UiSafeState.Success) return@launch
+        val currentData = currentState.data
+        val tracks = currentData.results
+        if (tracks.isEmpty()) return@launch
+
+        val currentIndex = tracks.indexOfFirst { it.isSelected }
+        val newIndex = when {
+            currentIndex == -1 -> tracks.lastIndex
+            else -> (currentIndex - 1 + tracks.size) % tracks.size
+        }
+        onItemSelected(newIndex)
     }
 }

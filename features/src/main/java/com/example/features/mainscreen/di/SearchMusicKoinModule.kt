@@ -13,7 +13,7 @@ import org.koin.dsl.module
 fun injectSearchMusicKoinModule(): List<Module> {
     return listOf(
         dispatcherModule,
-        searchMusicModelModule,
+        searchMusicViewModelModule,
         searchMusicRepositoryModule,
         searchMusicServiceModule
     )
@@ -23,7 +23,7 @@ val dispatcherModule = module {
     single { CoroutinesDispatcherProvider() }
 }
 
-private val searchMusicModelModule = module {
+private val searchMusicViewModelModule = module {
     viewModel { SearchMusicViewModel(get(), get()) }
 }
 
