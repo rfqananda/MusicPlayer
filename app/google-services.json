@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "658295280904",
+    "project_id": "music-player-ebadf",
+    "storage_bucket": "music-player-ebadf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:658295280904:android:d7c7703743737ba2ce08bd",
+        "android_client_info": {
+          "package_name": "com.example.musicplayer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBidQ7mY9lLIB9kYAVLF5mJvcmDWbvmZtw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
