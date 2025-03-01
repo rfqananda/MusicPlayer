@@ -30,13 +30,13 @@ class PlayerManager(
     init {
         exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                when(playbackState){
+                _playbackState.value = when (playbackState) {
                     Player.STATE_READY -> {
                         val currentDuration = exoPlayer.duration
                         if (currentDuration > 0) {
                             _duration.value = currentDuration
                         }
-                        _playbackState.value = PlaybackState.READY
+                        PlaybackState.READY
                     }
                     Player.STATE_BUFFERING -> PlaybackState.BUFFERING
                     Player.STATE_ENDED -> PlaybackState.ENDED
@@ -80,9 +80,32 @@ class PlayerManager(
         }
     }
 
+    fun reset() {
+        exoPlayer.stop()
+        exoPlayer.clearMediaItems()
+        positionUpdateJob?.cancel()
+        _currentPosition.value = 0L
+        _duration.value = 0L
+        _playbackState.value = PlaybackState.IDLE
+    }
+
+    fun restartPlayer() {
+        seekTo(0)
+        exoPlayer.play()
+    }
+
+    fun hasEnded(): Boolean {
+        val currentPos = currentPosition.value
+        val currentDuration = duration.value
+        return currentPos >= currentDuration - 1000 && currentDuration > 0
+    }
+
     fun release() {
         exoPlayer.release()
         positionUpdateJob?.cancel()
+        _currentPosition.value = 0L
+        _duration.value = 0L
+        _playbackState.value = PlaybackState.IDLE
     }
 }
 
