@@ -24,6 +24,9 @@ class SearchMusicViewModel(
         MutableStateFlow<UiSafeState<SearchMusicModelUi>>(UiSafeState.Uninitialized)
     val searchMusic: StateFlow<UiSafeState<SearchMusicModelUi>> = _searchMusic.asStateFlow()
 
+    private val _selectedPreviewUrl = MutableStateFlow<String?>(null)
+    val selectedPreviewUrl: StateFlow<String?> = _selectedPreviewUrl.asStateFlow()
+
     fun searchMusic(term: String) = viewModelScope.launch(dispatcher.io) {
         _searchMusic.update { UiSafeState.Loading }
         when (val response = repository.getSearchMusic(term)) {
@@ -54,11 +57,11 @@ class SearchMusicViewModel(
                 track.copy(isSelected = index == selectedPosition)
             }
 
-            _searchMusic.update {
-                UiSafeState.Success(
-                    currentData.copy(results = updatedResults)
-                )
-            }
+            val newData = currentData.copy(results = updatedResults)
+            _searchMusic.update { UiSafeState.Success(newData) }
+
+            val selectedTrack = newData.results.getOrNull(selectedPosition)
+            _selectedPreviewUrl.value = selectedTrack?.previewUrl
         }
     }
 

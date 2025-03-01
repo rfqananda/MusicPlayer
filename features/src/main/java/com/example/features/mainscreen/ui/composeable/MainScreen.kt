@@ -74,6 +74,7 @@ import com.example.uicomponent.shimmer.shimmerEffect
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +88,14 @@ fun MainScreenMusicPlayer(viewModel: SearchMusicViewModel = koinViewModel()) {
     val color = Color(ContextCompat.getColor(context, color.bottomBarColor))
 
     val playerManager = remember { PlayerManager(context, coroutineScope) }
+
+    val selectedPreviewUrl by viewModel.selectedPreviewUrl.collectAsState()
+
+    LaunchedEffect(selectedPreviewUrl) {
+        selectedPreviewUrl?.let { url ->
+            playerManager.preparePlayer(url)
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -285,9 +294,6 @@ private fun ListMusic(
 ) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(data) { index, track ->
-            if (track.isSelected) {
-                playerManager.preparePlayer(track.previewUrl)
-            }
             MusicItem(
                 item = track,
                 onClick = { onItemClick(index) },
