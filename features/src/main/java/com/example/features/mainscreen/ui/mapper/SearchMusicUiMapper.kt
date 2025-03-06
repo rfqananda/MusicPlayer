@@ -4,10 +4,10 @@ import com.example.features.mainscreen.domain.model.SearchMusicModelDomain
 import com.example.features.mainscreen.domain.model.TrackDomain
 import com.example.features.mainscreen.ui.model.SearchMusicModelUi
 import com.example.features.mainscreen.ui.model.TrackUi
-
+import com.example.uicomponent.extension.orZero
 
 fun SearchMusicModelDomain.toUi() = SearchMusicModelUi(
-    resultCount = resultCount ?: 0,
+    resultCount = resultCount.orZero(),
     results = results?.map { it.toUi() }.orEmpty()
 )
 

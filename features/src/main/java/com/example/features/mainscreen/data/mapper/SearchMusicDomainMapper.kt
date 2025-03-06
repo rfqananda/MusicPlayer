@@ -4,9 +4,10 @@ import com.example.core.networking.service.response.search_music.SearchMusicMode
 import com.example.core.networking.service.response.search_music.TrackResponse
 import com.example.features.mainscreen.domain.model.SearchMusicModelDomain
 import com.example.features.mainscreen.domain.model.TrackDomain
+import com.example.uicomponent.extension.orZero
 
 fun SearchMusicModelResponse.toDomain() = SearchMusicModelDomain(
-    resultCount = resultCount ?: 0,
+    resultCount = resultCount.orZero(),
     results = results?.map { it.toDomain() }.orEmpty()
 )
 

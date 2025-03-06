@@ -71,6 +71,9 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
+    //shimmer
+    implementation(libs.shimmer)
+
     implementation(project(":core"))
     implementation(project(":uicomponent"))
 }
