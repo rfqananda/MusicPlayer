@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/music_nav"
+    app:startDestination="@id/splashScreenFragment">
+
+    <fragment
+        android:id="@+id/splashScreenFragment"
+        android:name="com.example.features.splashscreen.fragment.SplashScreenFragment"
+        android:label="SplashScreenFragment"
+        tools:layout="@layout/splash_screen_fragment">
+
+        <action
+            android:id="@+id/navigateToStreamingMusicFragment"
+            app:destination="@id/streamingMusicFragment"
+            app:popUpTo="@id/splashScreenFragment"
+            app:popUpToInclusive="true" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/streamingMusicFragment"
+        android:name="com.example.features.mainscreen.ui.fragment.StreamingMusicFragment"
+        android:label="StreamingMusicFragment"
+        tools:layout="@layout/streaming_music_fragment"/>
+</navigation>
