@@ -72,35 +72,49 @@ class SearchMusicViewModel(
     fun nextTrack() = viewModelScope.launch(dispatcher.computation) {
         val currentState = _searchMusic.value
         if (currentState !is UiSafeState.Success) return@launch
-        val currentData = currentState.data
-        val tracks = currentData.results
+        val tracks = currentState.data.results
         if (tracks.isEmpty()) return@launch
 
         val currentIndex = tracks.indexOfFirst { it.isSelected }
-        val newIndex = when {
-            currentIndex == -1 -> 0
-            else -> (currentIndex + 1) % tracks.size
-        }
+
+        if (currentIndex == -1) return@launch
+
+        val newIndex = (currentIndex + 1) % tracks.size
         onItemSelected(newIndex)
     }
 
     fun previousTrack() = viewModelScope.launch(dispatcher.computation) {
         val currentState = _searchMusic.value
         if (currentState !is UiSafeState.Success) return@launch
-        val currentData = currentState.data
-        val tracks = currentData.results
+        val tracks = currentState.data.results
         if (tracks.isEmpty()) return@launch
 
         val currentIndex = tracks.indexOfFirst { it.isSelected }
-        val newIndex = when {
-            currentIndex == -1 -> tracks.lastIndex
-            else -> (currentIndex - 1 + tracks.size) % tracks.size
-        }
+
+        if (currentIndex == -1) return@launch
+
+        val newIndex = (currentIndex - 1 + tracks.size) % tracks.size
         onItemSelected(newIndex)
     }
 
     fun setListEmpty(){
         val emptyData = SearchMusicModelUi()
         _searchMusic.update { UiSafeState.Success(emptyData) }
+    }
+
+    fun resetSelection() = viewModelScope.launch(dispatcher.computation) {
+        val currentState = _searchMusic.value
+        if (currentState is UiSafeState.Success) {
+            val currentData = currentState.data
+            val updatedResults = currentData.results.map { track ->
+                track.copy(isSelected = false)
+            }
+
+            val newData = currentData.copy(
+                results = updatedResults
+            )
+            _searchMusic.update { UiSafeState.Success(newData) }
+            _selectedPreviewUrl.value = null
+        }
     }
 }

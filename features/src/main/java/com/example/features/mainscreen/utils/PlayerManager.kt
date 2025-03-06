@@ -18,7 +18,7 @@ class PlayerManager(
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context.applicationContext).build()
     private var positionUpdateJob: Job? = null
 
-    private val _playbackState = MutableStateFlow<PlaybackState>(PlaybackState.IDLE)
+    private val _playbackState = MutableStateFlow(PlaybackState.IDLE)
     val playbackState: StateFlow<PlaybackState> = _playbackState
 
     private val _currentPosition = MutableStateFlow(0L)
@@ -30,28 +30,37 @@ class PlayerManager(
     init {
         exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                _playbackState.value = when (playbackState) {
+                when (playbackState) {
+                    Player.STATE_ENDED -> {
+                        _playbackState.value = PlaybackState.ENDED
+                        exoPlayer.pause()
+                    }
                     Player.STATE_READY -> {
                         val currentDuration = exoPlayer.duration
                         if (currentDuration > 0) {
                             _duration.value = currentDuration
                         }
-                        PlaybackState.READY
+                        _playbackState.value = PlaybackState.READY
                     }
-                    Player.STATE_BUFFERING -> PlaybackState.BUFFERING
-                    Player.STATE_ENDED -> PlaybackState.ENDED
-                    else -> PlaybackState.IDLE
+                    Player.STATE_BUFFERING -> _playbackState.value = PlaybackState.BUFFERING
+                    else -> _playbackState.value = PlaybackState.IDLE
                 }
             }
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                _playbackState.value = if (isPlaying) PlaybackState.PLAYING
-                else PlaybackState.PAUSED
+                if (_playbackState.value != PlaybackState.ENDED) {
+                    _playbackState.value = if (isPlaying) PlaybackState.PLAYING
+                    else PlaybackState.PAUSED
+                }
             }
         })
     }
 
     fun preparePlayer(url: String) {
+        if (_playbackState.value == PlaybackState.ENDED) {
+            _playbackState.value = PlaybackState.IDLE
+        }
+
         exoPlayer.setMediaItem(MediaItem.fromUri(url))
         exoPlayer.prepare()
         exoPlayer.play()
@@ -90,6 +99,9 @@ class PlayerManager(
     }
 
     fun restartPlayer() {
+        if (_playbackState.value == PlaybackState.ENDED) {
+            _playbackState.value = PlaybackState.IDLE
+        }
         seekTo(0)
         exoPlayer.play()
     }
@@ -110,5 +122,5 @@ class PlayerManager(
 }
 
 enum class PlaybackState {
-    IDLE, READY, BUFFERING, PLAYING, PAUSED, ENDED
+    IDLE, READY, BUFFERING, PLAYING, PAUSED, ENDED;
 }
