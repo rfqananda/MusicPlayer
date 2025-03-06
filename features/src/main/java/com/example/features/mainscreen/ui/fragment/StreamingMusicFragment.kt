@@ -14,7 +14,9 @@ import com.example.features.databinding.StreamingMusicFragmentBinding
 import com.example.features.mainscreen.ui.adapter.ListMusicAdapter
 import com.example.features.mainscreen.ui.model.SearchMusicModelUi
 import com.example.features.mainscreen.ui.vm.SearchMusicViewModel
+import com.example.features.mainscreen.utils.PlayerManager
 import com.example.uicomponent.extension.visibleIf
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.scope.AndroidScopeComponent
 import org.koin.androidx.scope.fragmentScope
@@ -34,6 +36,8 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
         ListMusicAdapter()
     }
 
+    private var playerManager: PlayerManager? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -46,6 +50,7 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initPlayerManager()
         fetchData()
         initLiveData()
         initView()
@@ -53,16 +58,23 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
     }
 
     private fun fetchData() {
-        searchMusicViewModel.searchMusic("Tompi")
+        searchMusicViewModel.searchMusic("Ed Sheeran Thinking Out Loud")
+    }
+
+    private fun initPlayerManager(){
+        playerManager = PlayerManager(requireContext(), lifecycleScope)
     }
 
     private fun initView() {
         initAdapter()
     }
 
-    private fun initListener() = with(listMusicAdapter) {
-        setOnItemClickListener { position ->
+    private fun initListener(){
+        listMusicAdapter.setOnItemClickListener { position ->
             searchMusicViewModel.onItemSelected(position)
+        }
+        binding?.errorView?.btnRetry?.setOnClickListener {
+            searchMusicViewModel.searchMusic("tompi")
         }
     }
 
@@ -79,8 +91,28 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 searchMusicViewModel.searchMusic.collect { state ->
                     binding?.loadingList?.visibleIf(state is UiSafeState.Loading)
+                    binding?.errorView?.root?.visibleIf(
+                        state is UiSafeState.Error || state is UiSafeState.ErrorConnection
+                    )
+                    binding?.emptyView?.root?.visibleIf(state is UiSafeState.Empty)
                     handleDataState(state)
                 }
+            }
+
+
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                searchMusicViewModel.selectedPreviewUrl
+                    .combine(searchMusicViewModel.playTrigger) { previewUrl, _ ->
+                        previewUrl
+                    }
+                    .collect { previewUrl ->
+                        previewUrl?.let {
+                            playerManager?.preparePlayer(it)
+                        }
+                    }
             }
         }
     }
@@ -92,6 +124,7 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
             is UiSafeState.Success -> {
                 val data = state.data.results
                 binding?.rvMusic?.visibleIf(data.isNotEmpty())
+                binding?.emptyView?.root?.visibleIf(data.isEmpty())
                 data.takeIf { it.isNotEmpty() }?.let { listMusicAdapter.submitData(it) }
             }
 
@@ -109,5 +142,6 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
         super.onDestroyView()
         _binding = null
         binding?.rvMusic?.adapter = null
+        playerManager?.release()
     }
 }
