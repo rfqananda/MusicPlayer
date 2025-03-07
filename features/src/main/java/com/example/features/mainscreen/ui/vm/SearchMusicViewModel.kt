@@ -35,17 +35,19 @@ class SearchMusicViewModel(
         when (val response = repository.getSearchMusic(term)) {
             is DomainResult.Success -> {
                 val data = response.data.toUi()
-                _searchMusic.update { UiSafeState.Success(data) }
+                val currentSelectedUrl = _selectedPreviewUrl.value
+                val updatedResults = data.results.map { track ->
+                    track.copy(isSelected = track.previewUrl == currentSelectedUrl)
+                }
+                val updatedData = data.copy(results = updatedResults)
+                _searchMusic.update { UiSafeState.Success(updatedData) }
             }
-
             is DomainResult.ErrorState -> {
                 _searchMusic.update { UiSafeState.Error(response.message ?: UNKNOWN_ERROR) }
             }
-
             is DomainResult.EmptyState -> {
                 _searchMusic.update { UiSafeState.Empty }
             }
-
             else -> {
                 _searchMusic.update { UiSafeState.Error(UNKNOWN_ERROR) }
             }

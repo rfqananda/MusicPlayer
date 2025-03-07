@@ -10,6 +10,7 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.android.scope.AndroidScopeComponent
 import org.koin.androidx.scope.activityScope
 import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.context.GlobalContext.stopKoin
 import org.koin.core.scope.Scope
 
 class MainActivity : AppCompatActivity(), AndroidScopeComponent {
@@ -37,5 +38,6 @@ class MainActivity : AppCompatActivity(), AndroidScopeComponent {
     override fun onDestroy() {
         super.onDestroy()
         playerManager?.release()
+        stopKoin()
     }
 }

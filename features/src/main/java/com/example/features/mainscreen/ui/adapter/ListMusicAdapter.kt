@@ -42,7 +42,7 @@ class ListMusicAdapter : RecyclerView.Adapter<ListMusicAdapter.ViewHolder>() {
 
                 songImage.load(item.songImage) {
                     crossfade(true)
-                    transformations(RoundedCornersTransformation(10f))
+                    transformations(RoundedCornersTransformation(40f))
                 }
 
                 indicator.visibleIf(item.isSelected)

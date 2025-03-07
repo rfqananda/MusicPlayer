@@ -8,8 +8,3 @@ sealed class UiSafeState<out T> {
     data class Error(val message: String, val errorCode: Int = 0) : UiSafeState<Nothing>()
     data class Success<out T>(val data: T) : UiSafeState<T>()
 }
-
-fun <T> UiSafeState<T>.isError(withEmpty: Boolean = true): Boolean =
-    this is UiSafeState.Error ||
-            this is UiSafeState.ErrorConnection ||
-            (this is UiSafeState.Empty && withEmpty)

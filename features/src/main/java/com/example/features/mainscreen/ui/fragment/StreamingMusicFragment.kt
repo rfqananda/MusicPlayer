@@ -19,6 +19,8 @@ import com.example.features.mainscreen.ui.vm.SearchMusicViewModel
 import com.example.features.mainscreen.utils.PlaybackState
 import com.example.features.mainscreen.utils.PlayerManager
 import com.example.features.mainscreen.utils.formatTime
+import com.example.uicomponent.extension.gone
+import com.example.uicomponent.extension.visible
 import com.example.uicomponent.extension.visibleIf
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -26,206 +28,248 @@ import org.koin.android.scope.AndroidScopeComponent
 import org.koin.androidx.scope.fragmentScope
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-
 class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
 
     override val scope by fragmentScope()
 
     private var _binding: StreamingMusicFragmentBinding? = null
-    private val binding get() = _binding
+    private val binding get() = _binding!!
 
     private val searchMusicViewModel: SearchMusicViewModel by viewModel()
+    private val listMusicAdapter by lazy { ListMusicAdapter() }
+    private lateinit var playerManager: PlayerManager
 
-    private val listMusicAdapter by lazy {
-        ListMusicAdapter()
-    }
-
-    private var playerManager: PlayerManager? = null
+    private var searchKeyword = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = StreamingMusicFragmentBinding.inflate(inflater, container, false)
-        val view = binding?.root
-        return view
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initPlayerManager()
-        fetchData()
-        initLiveData()
-        observerPlayerManager()
-        initView()
-        initListener()
-        setupPlayerController()
-    }
-
-    private fun fetchData() {
-        searchMusicViewModel.searchMusic("Ed Sheeran Thinking Out Loud")
-    }
-
-    private fun initPlayerManager() {
-        playerManager = PlayerManager(requireContext(), lifecycleScope)
-    }
-
-    private fun initView() {
-        initAdapter()
-    }
-
-    private fun initListener() {
-        listMusicAdapter.setOnItemClickListener { position ->
-            searchMusicViewModel.onItemSelected(position)
-        }
-        binding?.errorView?.btnRetry?.setOnClickListener {
-            searchMusicViewModel.searchMusic("tompi")
-        }
-        binding?.playerController?.apply {
-            btnPlayPause.setOnClickListener {
-                playerManager?.playPause()
-            }
-            btnPrevious.setOnClickListener {
-                searchMusicViewModel.previousTrack()
-            }
-            btnNext.setOnClickListener {
-                searchMusicViewModel.nextTrack()
-            }
-        }
-    }
-
-    private fun initAdapter() {
-        binding?.rvMusic?.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = listMusicAdapter
-        }
-    }
-
-    private fun initLiveData() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    searchMusicViewModel.searchMusic.collect { state ->
-                        binding?.loadingList?.visibleIf(state is UiSafeState.Loading)
-                        binding?.errorView?.root?.visibleIf(
-                            state is UiSafeState.Error || state is UiSafeState.ErrorConnection
-                        )
-                        binding?.emptyView?.root?.visibleIf(state is UiSafeState.Empty)
-                        handleDataState(state)
-                    }
-                }
-                launch {
-                    repeatOnLifecycle(Lifecycle.State.STARTED) {
-                        searchMusicViewModel.selectedPreviewUrl
-                            .combine(searchMusicViewModel.playTrigger) { previewUrl, _ ->
-                                previewUrl
-                            }
-                            .collect { previewUrl ->
-                                previewUrl?.let {
-                                    playerManager?.preparePlayer(it)
-                                }
-                            }
-                    }
-                }
-
-            }
-        }
-    }
-
-    private fun setupPlayerController() {
-        binding?.playerController?.apply {
-            seekBar.max = 100
-            seekBar.progress = 0
-
-            seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                    if (fromUser) {
-                        tvCurrentTime.text = formatTime(progress.toLong())
-                    }
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar) {}
-
-                override fun onStopTrackingTouch(seekBar: SeekBar) {
-                    playerManager?.seekTo(seekBar.progress.toLong())
-                }
-            })
-        }
-    }
-
-    private fun observerPlayerManager() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    playerManager?.playbackState?.collect { state ->
-                        val icon = when (state) {
-                            PlaybackState.PLAYING -> R.drawable.pause
-                            else -> R.drawable.play
-                        }
-                        binding?.playerController?.btnPlayPause?.setImageResource(icon)
-
-                        when (state) {
-                            PlaybackState.ENDED -> {
-                                searchMusicViewModel.resetSelection()
-                                playerManager?.reset()
-                            }
-
-                            PlaybackState.IDLE -> {}
-                            PlaybackState.READY -> {}
-                            PlaybackState.BUFFERING -> {}
-                            PlaybackState.PLAYING -> {}
-                            PlaybackState.PAUSED -> {}
-                        }
-                    }
-                }
-
-                launch {
-                    playerManager?.currentPosition?.collect { position ->
-                        binding?.playerController?.apply {
-                            tvCurrentTime.text = formatTime(position)
-                            seekBar.progress = position.toInt()
-                        }
-                    }
-                }
-
-                launch {
-                    playerManager?.duration?.collect { duration ->
-                        binding?.playerController?.apply {
-                            tvDuration.text = formatTime(duration)
-                            seekBar.max = duration.toInt()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun handleDataState(
-        state: UiSafeState<SearchMusicModelUi>
-    ) {
-        when (state) {
-            is UiSafeState.Success -> {
-                val data = state.data.results
-                binding?.rvMusic?.visibleIf(data.isNotEmpty())
-                binding?.emptyView?.root?.visibleIf(data.isEmpty())
-                data.takeIf { it.isNotEmpty() }?.let { listMusicAdapter.submitData(it) }
-            }
-
-            is UiSafeState.Error -> {
-            }
-
-            is UiSafeState.Empty -> {
-            }
-
-            else -> {}
-        }
+        initializePlayerManager()
+        setupViews()
+        setupObservers()
+        setupListeners()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        binding?.rvMusic?.adapter = null
-        playerManager?.release()
+        playerManager.release()
+    }
+
+    private fun initializePlayerManager() {
+        playerManager = PlayerManager(requireContext(), lifecycleScope)
+        setupPlayerController()
+    }
+
+    private fun setupViews() {
+        setupRecyclerView()
+        setupSearchBar()
+    }
+
+    private fun setupRecyclerView() = with(binding) {
+        rvMusic.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = listMusicAdapter
+        }
+    }
+
+    private fun setupSearchBar() = with(binding) {
+        searchBar.apply {
+            onSearchActionListener = { keyword ->
+                searchKeyword = keyword
+                searchMusicViewModel.searchMusic(keyword)
+            }
+            onEndIconClickListener = {
+                playerManager.reset()
+                searchMusicViewModel.resetSelection()
+                rvMusic.gone()
+                emptyView.root.gone()
+                errorView.root.gone()
+                startView.root.visible()
+            }
+        }
+    }
+
+    private fun setupPlayerController() = with(binding) {
+        playerController.apply {
+            seekBar.max = 100
+            setupSeekBarListener()
+        }
+    }
+
+    private fun setupListeners() {
+        setupAdapterClickListener()
+        setupPlayerControls()
+        setupErrorRetryButton()
+    }
+
+    private fun setupAdapterClickListener() {
+        listMusicAdapter.setOnItemClickListener { position ->
+            searchMusicViewModel.onItemSelected(position)
+        }
+    }
+
+    private fun setupPlayerControls() = with(binding) {
+        playerController.apply {
+            btnPlayPause.setOnClickListener { playerManager.playPause() }
+            btnPrevious.setOnClickListener { searchMusicViewModel.previousTrack() }
+            btnNext.setOnClickListener { searchMusicViewModel.nextTrack() }
+        }
+    }
+
+    private fun setupErrorRetryButton() = with(binding) {
+        errorView.btnRetry.setOnClickListener {
+            searchMusicViewModel.searchMusic(searchKeyword)
+        }
+    }
+
+    private fun setupSeekBarListener() = with(binding) {
+        binding.playerController.seekBar.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                    if (fromUser) playerController.tvCurrentTime.text =
+                        formatTime(progress.toLong())
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                    playerManager.seekTo(seekBar.progress.toLong())
+                }
+            }
+        )
+    }
+
+    private fun setupObservers() {
+        observeSearchResults()
+        observePlayerState()
+        observePlaybackMetadata()
+        observePreviewUrls()
+    }
+
+    private fun observeSearchResults() = with(binding) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                searchMusicViewModel.searchMusic.collect { state ->
+                    handleUiState(state)
+                }
+            }
+        }
+    }
+
+    private fun observePlayerState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                playerManager.playbackState.collect { state ->
+                    updatePlaybackControls(state)
+                    handlePlaybackCompletion(state)
+                }
+            }
+        }
+    }
+
+    private fun observePlaybackMetadata() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { observeCurrentPosition() }
+                launch { observeTrackDuration() }
+            }
+        }
+    }
+
+    private fun observePreviewUrls() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                searchMusicViewModel.selectedPreviewUrl
+                    .combine(searchMusicViewModel.playTrigger) { previewUrl, _ ->
+                        previewUrl
+                    }
+                    .collect { previewUrl ->
+                        previewUrl?.let {
+                            playerManager.preparePlayer(it)
+                        }
+                    }
+            }
+        }
+    }
+
+    private fun observeCurrentPosition() = with(binding) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                playerManager.currentPosition.collect { position ->
+                    playerController.apply {
+                        tvCurrentTime.text = formatTime(position)
+                        seekBar.progress = position.toInt()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun observeTrackDuration() = with(binding) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                playerManager.duration.collect { duration ->
+                    playerController.apply {
+                        tvDuration.text = formatTime(duration)
+                        seekBar.max = duration.toInt()
+                    }
+                }
+            }
+        }
+
+    }
+
+    private fun handleUiState(state: UiSafeState<SearchMusicModelUi>) = with(binding) {
+        val isLoading = state is UiSafeState.Loading
+        val isError = state is UiSafeState.Error || state is UiSafeState.ErrorConnection
+        val isEmpty = state is UiSafeState.Empty
+        val isSuccess = state is UiSafeState.Success
+
+        loadingList.visibleIf(isLoading)
+        errorView.root.visibleIf(isError)
+        emptyView.root.visibleIf(isEmpty)
+        rvMusic.visibleIf(isSuccess)
+        startView.root.visibleIf(!(isLoading || isError || isEmpty || isSuccess))
+        when (state) {
+            is UiSafeState.Success -> handleSuccessState(state.data)
+            is UiSafeState.Error -> showError(state.message)
+            is UiSafeState.ErrorConnection -> showError()
+            else -> {}
+        }
+    }
+
+    private fun handleSuccessState(data: SearchMusicModelUi) = with(binding) {
+        rvMusic.visibleIf(data.results.isNotEmpty())
+        emptyView.root.visibleIf(data.results.isEmpty())
+        listMusicAdapter.submitData(data.results)
+    }
+
+    private fun updatePlaybackControls(state: PlaybackState) = with(binding) {
+        playerController.btnPlayPause.setImageResource(
+            when (state) {
+                PlaybackState.PLAYING -> R.drawable.pause
+                else -> R.drawable.play
+            }
+        )
+    }
+
+    private fun handlePlaybackCompletion(state: PlaybackState) {
+        if (state == PlaybackState.ENDED) {
+            searchMusicViewModel.resetSelection()
+            playerManager.reset()
+        }
+    }
+
+    private fun showError(errorMessage: String = "") = with(binding) {
+        errorView.tvError.text = errorMessage.ifEmpty { "Terjadi kesalahan..." }
     }
 }

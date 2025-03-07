@@ -13,6 +13,8 @@
         android:layout_height="wrap_content"
         android:max="100"
         android:progress="0"
+        android:progressTint="@color/white"
+        android:thumbTint="@color/bluePrimary"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
