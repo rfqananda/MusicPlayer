@@ -119,4 +119,9 @@ class SearchMusicViewModel(
             _selectedPreviewUrl.value = null
         }
     }
+
+    fun resetSearch() {
+        _searchMusic.value = UiSafeState.Uninitialized
+        _selectedPreviewUrl.value = null
+    }
 }

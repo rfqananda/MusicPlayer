@@ -89,7 +89,7 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
             }
             onEndIconClickListener = {
                 playerManager.reset()
-                searchMusicViewModel.resetSelection()
+                searchMusicViewModel.resetSearch()
                 rvMusic.gone()
                 emptyView.root.gone()
                 errorView.root.gone()
@@ -237,7 +237,6 @@ class StreamingMusicFragment : Fragment(), AndroidScopeComponent {
         loadingList.visibleIf(isLoading)
         errorView.root.visibleIf(isError)
         emptyView.root.visibleIf(isEmpty)
-        rvMusic.visibleIf(isSuccess)
         startView.root.visibleIf(!(isLoading || isError || isEmpty || isSuccess))
         when (state) {
             is UiSafeState.Success -> handleSuccessState(state.data)
